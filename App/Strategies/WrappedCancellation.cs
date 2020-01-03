@@ -12,22 +12,53 @@ namespace App.Strategies
     {
         public static async Task RunAsync(CancellationToken cancellationToken)
         {
-            var taskCompletionSource = new TaskCompletionSource<object>();
-
             var nonCancellableWorkTask = LongRunningWorkFactory.CreateNonCancellableLongRunningWork();
 
-            cancellationToken.Register(() =>
+            try
             {
-                taskCompletionSource.TrySetCanceled();
-            });
+                await WrapWithCancellation(nonCancellableWorkTask, cancellationToken);
+            }
+            catch (OperationCanceledException ex)
+            {
+                ConsoleColor.Red.WriteLine($"{nameof(OperationCanceledException)}: {ex.Message}");
+            }
+        }
 
-            var completedTask = await Task.WhenAny(nonCancellableWorkTask, taskCompletionSource.Task);
+        public static async Task RunAsync(TimeSpan timeout)
+        {
+            var nonCancellableWorkTask = LongRunningWorkFactory.CreateNonCancellableLongRunningWork();
 
-            var cancelledOrCompleted = completedTask == taskCompletionSource.Task
-                ? "cancelled"
-                : "completed";
+            try
+            {
+                await WrapWithTimeSpan(nonCancellableWorkTask, timeout);
+            }
+            catch (OperationCanceledException ex)
+            {
+                ConsoleColor.Red.WriteLine($"{nameof(OperationCanceledException)}: {ex.Message}");
+            }
+        }
 
-            ConsoleColor.Yellow.WriteLine($"\nTask is {cancelledOrCompleted}");
+        private static async Task WrapWithCancellation(Task task, CancellationToken cancellationToken)
+        {
+            var taskCompletionSource = new TaskCompletionSource<object>();
+
+            await using (cancellationToken.Register(() => taskCompletionSource.TrySetCanceled()))
+            {
+                var completedTask = await Task.WhenAny(task, taskCompletionSource.Task);
+                if (completedTask != task)
+                {
+                    throw new OperationCanceledException(cancellationToken);
+                }
+            }
+        }
+
+        private static async Task WrapWithTimeSpan(Task task, TimeSpan timeout)
+        {
+            var completedTask = await Task.WhenAny(task, Task.Delay(timeout));
+            if (completedTask != task)
+            {
+                throw new OperationCanceledException("Timeout expired", new TimeoutException($"{timeout}"));
+            }
         }
     }
 }

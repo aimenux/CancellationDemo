@@ -23,6 +23,7 @@ namespace App
             var timeout2 = TimeSpan.FromMilliseconds(GetRandomNumber());
             using var cancellationTokenSource = new CancellationTokenSource(timeout2);
             ConsoleColor.Green.WriteLine($"\nStarting {nameof(WrappedCancellation)} - Timeout [{timeout2}]");
+            await WrappedCancellation.RunAsync(timeout2);
             await WrappedCancellation.RunAsync(cancellationTokenSource.Token);
 
             using var cancellationTokenSource1 = new CancellationTokenSource(timeout1);
