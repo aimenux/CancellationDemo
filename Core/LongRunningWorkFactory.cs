@@ -12,7 +12,7 @@ namespace Core
             {
                 for (var index = 1; index <= maxIterations; index++)
                 {
-                    await WaitNonCancellableDelay();
+                    await CreateNonCancellableDelay();
 
                     if (cancellationToken.IsCancellationRequested)
                     {
@@ -31,16 +31,16 @@ namespace Core
             {
                 for (var index = 1; index <= maxIterations; index++)
                 {
-                    await WaitNonCancellableDelay();
+                    await CreateNonCancellableDelay();
 
                     ConsoleColor.Gray.WriteLine($"[NonCancellableLongRunning] Iteration {index}/{maxIterations} completed");
                 }
             });
         }
 
-        private static Task WaitNonCancellableDelay()
+        public static Task CreateNonCancellableDelay(int value = 1000)
         {
-            var delay = TimeSpan.FromMilliseconds(1000);
+            var delay = TimeSpan.FromMilliseconds(value);
             return Task.Delay(delay);
         }
     }
