@@ -6,6 +6,9 @@ using Core;
 
 namespace App.Callbacks
 {
+    /// <summary>
+    /// Raise exception in a callback registered before cancellation
+    /// </summary>
     public static class CallbackRaiseExceptionBeforeCancellation
     {
         public static async Task RunAsync()
